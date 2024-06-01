@@ -4,7 +4,45 @@ const db = require('../db')
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
-// router.post('/signup', authController.Signup);
+router.post('/signup', async (req,res) => {
+    try {
+        const { name, username, password, email } = req.body;
+    
+        const existingUser = await db.query('SELECT * FROM public.users WHERE email = $1', [email]);
+        if (existingUser.rows.length > 0) {
+          return res.status(400).json({ message: 'Email already exists' });
+        }
+        const existingUserName = await db.query('SELECT * FROM public.users WHERE username = $1', [username]);
+        if(existingUserName.rows.length > 0) {
+            return res.status(400).json({message: 'Username already taken'});
+        }
+
+        bcrypt.genSalt(10, async (err, salt) => {
+          if (err) {
+            throw err;
+          }
+          bcrypt.hash(password, salt, async (err, hashedPassword) => {
+            if (err) {
+              throw err;
+            }
+    
+            // Store user data in the database
+            const query = `
+              INSERT INTO public.users (name, username, password, email) 
+              VALUES ($1, $2, $3, $4)
+            `;
+            await db.query(query, [name, username, hashedPassword, email]);
+           
+
+            res.status(201).json({ message: "User created successfully"});
+          });
+        });
+    
+      } catch (error) {
+        console.error("Error: ", error);
+        res.status(500).json({ error: "Internal Server error" });
+      }
+});
 router.post('/login',  async (req, res) => {
     try{
         const { username, password } = req.body;
