@@ -1,8 +1,10 @@
-const db = require('../../db');
+const express = require('express');
+const router = express.Router();
+const db = require('../db')
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
-const Signup = async (req, res) => {
+router.post('/signup', async (req,res) => {
     try {
         const { name, username, password, email } = req.body;
     
@@ -40,9 +42,8 @@ const Signup = async (req, res) => {
         console.error("Error: ", error);
         res.status(500).json({ error: "Internal Server error" });
       }
-}
-
-const Login = async (req, res ) => {
+});
+router.post('/login',  async (req, res) => {
     try{
         const { username, password } = req.body;
         const query = `SELECT * FROM public.users where username = $1`;
@@ -68,6 +69,6 @@ const Login = async (req, res ) => {
         console.error('Error during login:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
-  }
+});
 
-module.exports = { Signup, Login }
+module.exports = router;
